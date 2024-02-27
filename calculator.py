@@ -104,6 +104,7 @@ class Calculator:
                 if func == 'LOG':
                     if self.count(',', b_c) != 1:
                         raise Exception('Base Error')
+
                     base, b_c = b_c.split(',')
                     base_val = float(self.__recursive_evaluate(base))
                     if base_val == 1 or base_val <= 0:
@@ -277,7 +278,7 @@ class Calculator:
             for i in range(carat_location):
                 if data[carat_location - 1 - i] not in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.']:
                     return data[:carat_location - i] + '(' + data[carat_location - i:end + 1] + ')' + data[end + 1:]
-                return '(' + data[:end + 1] + ')' + data[end + 1:]
+            return '(' + data[:end + 1] + ')' + data[end + 1:]
         else:
             return data
 
