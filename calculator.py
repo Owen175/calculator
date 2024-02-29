@@ -60,18 +60,31 @@ class Calculator:
 
     @staticmethod
     def __remove_double_negatives(data: str) -> str:
-        d_before_last = None
-        last_d = None
-        returnable = ''
-        for d in data:
-            if d == '-' and last_d == '-':
-                returnable = returnable[:-1]
-            elif d == '-' and last_d == '+' and d_before_last == '-':
-                returnable = returnable[:-2]
-            else:
-                returnable += d
-            d_before_last = last_d
-            last_d = d
+        changes = True
+        temp_data = data
+
+        while changes:
+            returnable = ''
+            d_before_last = None
+            last_d = None
+            for i, d in enumerate(temp_data):
+                if d == '-' and last_d == '-':
+                    returnable = returnable[:-1]
+                    temp_data = returnable + '+' + temp_data[i+1:]
+                    break
+                elif d == '-' and last_d == '+' and d_before_last == '-':
+                    returnable = returnable[:-2]
+                    temp_data = returnable + '+' + temp_data[i+1:]
+                    break
+                elif d == '+' and last_d == '+':
+                    temp_data = returnable + temp_data[i+1:]
+                    break
+                else:
+                    returnable += d
+                d_before_last = last_d
+                last_d = d
+                if i == len(temp_data) - 1:
+                    changes = False
         return returnable
 
     def __recursive_evaluate(self, data: str) -> str:
@@ -289,16 +302,9 @@ class Calculator:
             if searching == val:
                 count += 1
         return count
-    #
-    # def __check_for_lack_of_operations(self, data):
-    #     for i, d in enumerate(data):
-    #         if d == '(':
-    #             if i > 0:
-    #                 if data[i-1] in ')1234567890':
-    #                     raise Exception('Lack of Operation')
-    #                 elif i > 3:
-    #                     if data[i - 3:i] in self.__func_dict.keys():
-    #                         if data[i-4] in ')1234567890':
-    #                             raise Exception('Lack of Operation')
 
 
+
+if __name__ == '__main__':
+    c = Calculator()
+    print(c.evaluate('9--9'))

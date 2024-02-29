@@ -1,20 +1,21 @@
 import tkinter as tk
 from calculator import Calculator
+import math
 
 
 class Calculator_GUI:
     def __init__(self):
         self.previous_ans_len = 0
         self.constants = ['e', 'π', 'ANS']
-        self.conversion_dict = {'e': '2.718281828459045',
-                                'π': '3.141592653589793',
+        self.conversion_dict = {'e': str(math.e),
+                                'π': str(math.pi),
                                 'ln(': 'nlg(',
                                 'log(': 'log((',
-                                ',': '),'}
-        self.functions = ['SRT(', 'ln(', 'log(', 'sin(', 'cos(', 'tan(']
+                                ',': '),',
+                                'SQRT(': 'SRT('}
+        self.functions = ['SQRT(', 'ln(', 'log(', 'sin(', 'cos(', 'tan(']
         self.calculator = Calculator()
         self.expression_list = []
-        self.evaluation_list = []
         self.root = tk.Tk()
         self.root.title('Calculator')
         self.root.geometry('500x713')
@@ -29,6 +30,14 @@ class Calculator_GUI:
         self.root.mainloop()
 
     def add_text(self, text, display=None):
+        if text == '.':
+            expression = ''.join(self.expression_list)
+            if len(expression) == 0:
+                text = '0.'
+            else:
+                if expression[-1] in '+-/*^':
+                    text = '0.'
+
         if display is None:
             display = self.display
         display.config(state='normal')
@@ -37,28 +46,19 @@ class Calculator_GUI:
             display.config(state='readonly')
             return None
         else:
-            if text in self.conversion_dict.keys():
-                if len(self.expression_list) == 0:
-                    self.display_insert_tool(display, sum([len(x) for x in self.expression_list]), text, True)
-                elif self.valid_expression(text):
-                    # Prevents you writing epi without an operator
-                    self.display_insert_tool(display, sum([len(x) for x in self.expression_list]), text, True)
-                else:
-                    pass
+            if len(self.expression_list) == 0:
+                self.display_insert_tool(display, sum([len(x) for x in self.expression_list]), text)
+            elif self.valid_expression(text):
+                # Prevents you writing epi without an operator
+                self.display_insert_tool(display, sum([len(x) for x in self.expression_list]), text)
             else:
-                if len(self.expression_list) == 0:
-                    self.display_insert_tool(display, sum([len(x) for x in self.expression_list]), text, False)
-                elif self.valid_expression(text):
-                    self.display_insert_tool(display, sum([len(x) for x in self.expression_list]), text, False)
+                pass
+
             display.config(state='readonly')
             return None
 
-    def display_insert_tool(self, display, length, text, conversion: bool):
+    def display_insert_tool(self, display, length, text):
         display.insert(length, text)
-        if conversion:
-            self.evaluation_list.append(self.conversion_dict[text])
-        else:
-            self.evaluation_list.append(text)
         self.expression_list.append(text)
 
     def clear(self, display=None):
@@ -73,7 +73,6 @@ class Calculator_GUI:
             display.config(state='readonly')
             if display == self.display:
                 self.expression_list = []
-                self.evaluation_list = []
 
     def delete(self):
         if len(self.expression_list) != 0:
@@ -82,25 +81,17 @@ class Calculator_GUI:
                                 sum([len(x) for x in self.expression_list]))
             self.display.config(state='readonly')
             self.expression_list = self.expression_list[:-1]
-            self.evaluation_list = self.evaluation_list[:-1]
 
     def equals(self):
-        if len(self.evaluation_list) != 0:
-            expression = ''.join(self.evaluation_list)
-            if 'ANS' in expression:
-                changes = True
-                while changes:
-                    last_last_char = None
-                    last_char = None
-                    for i, char in enumerate(expression):
-                        if last_last_char == 'A' and last_char == 'N' and char == 'S':
-                            expression = expression[:i - 2] + f'{self.calculator.ans:f}' + expression[i + 1:]
-                            break
-                        if i == len(expression) - 1:
-                            changes = False
-                        last_last_char = last_char
-                        last_char = char
-            self.clear(display=self.answer)
+        if len(self.expression_list) != 0:
+            expression = ''
+            for expr in self.expression_list:
+                if expr in self.conversion_dict.keys():
+                    expression += self.conversion_dict[expr]
+                elif expr == 'ANS':
+                    expression += f'{self.calculator.ans:f}'
+                else:
+                    expression += expr
             try:
                 txt = self.calculator.evaluate(expression)
             except ValueError as e:
@@ -146,9 +137,9 @@ class Calculator_GUI:
                                   bg='gold',
                                   command=lambda: self.add_text('^2'))
 
-        buttons[0][1] = tk.Button(self.root, bd='5', height=3, width=7, text='SRT', font=('courier', 15, 'bold'),
+        buttons[0][1] = tk.Button(self.root, bd='5', height=3, width=7, text='SQRT', font=('courier', 15, 'bold'),
                                   bg='gold',
-                                  command=lambda: self.add_text('SRT('))
+                                  command=lambda: self.add_text('SQRT('))
         buttons[1][1] = tk.Button(self.root, bd='5', height=3, width=7, text='π', font=('courier', 15, 'bold'),
                                   bg='gold',
                                   command=lambda: self.add_text('π'))
@@ -255,6 +246,8 @@ class Calculator_GUI:
             return False
         if (txt == '(' or txt in self.functions or txt in self.constants) and (
                 last_txt in self.constants or last_txt in ')1234567890.'):
+            return False
+        if txt == '.' and last_txt[-1] == '.':
             return False
         return True
 
