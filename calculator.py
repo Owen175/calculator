@@ -19,6 +19,9 @@ class Calculator:
     def __tan(self, degrees):
         if not self.__rad:
             degrees *= math.pi / 180
+        if (degrees-math.pi/2)%(2 * math.pi) == 0:
+            raise Exception('Asymptote')
+        print(degrees)
         return math.tan(degrees)
 
     def __cos(self, degrees):
@@ -36,16 +39,24 @@ class Calculator:
         return self.__ans
 
     def evaluate(self, data: str) -> str:
-        data = self.__process(data)
-        self.__ans = float(self.__recursive_evaluate(data))
-        return f'{self.__ans:f}'
-
+        self.check_for_opening_closing_brackets(data)  # Returns an error if there is an opening + closing bracket combo. 
+        data = self.__process(data)  # Formats the data to ensure that the input is acceptable, e.g. adding brackets around indices to prevent confusion. 
+        self.__ans = float(self.__recursive_evaluate(data))  # Evaluates
+        return f'{self.__ans:f}'  # Formats it without the scientific format
+    
+    def check_for_opening_closing_brackets(self, data):
+        last_d = ''
+        for d in data:
+            if last_d == '(' and d == ')':
+                raise Exception('Empty Brackets')  # Tkinter will catch this - puts it on the error line
+            last_d = d
+        
     def __process(self, data: str) -> str:
-        spaceless = ''.join([x for x in data if x != ' ']).upper()
+        spaceless = ''.join([x for x in data if x != ' ']).upper()  # Removes all spaces as they have no mathematical function
         add_pluses = ''
         for i, d in enumerate(spaceless):
             if i > 0 and d == '-':
-                if spaceless[i - 1] not in ['/', '*', '+', '-']:
+                if spaceless[i - 1] not in ['/', '*', '+', '-']:  # This adds pluses before any - sign that doesn't have these signs preceding it. Now - is not a function - only adding negatives
                     add_pluses += '+'
             add_pluses += d
         returnable = self.__remove_double_negatives(add_pluses)
@@ -54,8 +65,6 @@ class Calculator:
         if returnable[0] == '+':
             returnable = returnable[1:]
         returnable = self.__indices_format(returnable)
-        # self.__check_for_lack_of_operations(returnable)
-        # Handled by the GUI - prevents the input rather than filtering the output
         return returnable
 
     @staticmethod
@@ -206,7 +215,7 @@ class Calculator:
         return data
 
     @staticmethod
-    def __get_previous_num(bracketless_expression: str, finish: int) -> tuple[str, int]:
+    def __get_previous_num(bracketless_expression: str, finish: int) -> tuple:
         n = ''
         acceptable_list = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9', '.', '-']
 
@@ -222,7 +231,7 @@ class Calculator:
         return n, finish - i - 1
 
     @staticmethod
-    def __get_next_num(bracketless_expression: str, start: int) -> tuple[str, int]:
+    def __get_next_num(bracketless_expression: str, start: int) -> tuple:
         n = ''
 
         for i in range(len(bracketless_expression) - start):
@@ -236,7 +245,7 @@ class Calculator:
         return n, start + i
 
     @staticmethod
-    def __insert(expression: str, evals: list[list[str, int, int]]) -> str:
+    def __insert(expression: str, evals: list) -> str:
         index = 0
         for eval, s, f in evals:
             expression = expression[:s + index] + eval + expression[f + index + 1:]
