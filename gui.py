@@ -249,6 +249,8 @@ class Calculator_GUI:
             return False
         if txt == '.' and last_txt[-1] == '.':
             return False
+        if txt in '*/' and last_txt in '*/+-':
+            return False
         return True
 
     def rad_set(self, boolean: bool):
